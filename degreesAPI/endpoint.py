@@ -80,11 +80,16 @@ def main(load, name1, name2):
     print("Data loaded.")
 
     source = person_id_for_name(name1)
+    output = []
     if source is None:
-        sys.exit("Person not found.")
+        output.append(None)
+        output.append("Person 1 not found.")
+        return output
     target = person_id_for_name(name2)
     if target is None:
-        sys.exit("Person not found.")
+        output.append(None)
+        output.append("Person 2 not found.")
+        return output
 
     path = shortest_path(source, target)
 
@@ -191,6 +196,8 @@ def search(
     ):
     output = main(load=directory, name1=name1, name2=name2)
     if output is None:
-        return SerializerNoneReturn(message="Not connected.")
+        return SerializerNoneReturn(message="No connected.")
+    elif output[0] is None:
+        return SerializerNoneReturn(message=output[1])
     else:
         return SerializerDataReturn(degrees = output['degrees'], layers=output['layers'])

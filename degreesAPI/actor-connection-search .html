@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Actor Connection Search</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        input, select, button {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        #results {
+            margin-top: 20px;
+        }
+        .result-item {
+            background-color: #f9f9f9;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Actor Connection Search</h1>
+        
+        <form id="searchForm">
+            <select id="directory">
+                <option value="small">Small Database</option>
+                <option value="large">Large Database</option>
+            </select>
+            <input type="text" id="actor1" placeholder="First Actor's Name" required>
+            <input type="text" id="actor2" placeholder="Second Actor's Name" required>
+            <button type="submit">Search</button>
+        </form>
+
+        <div id="results"></div>
+    </div>
+
+    <script>
+        const API_URL = 'http://127.0.0.1:8000';
+
+        document.getElementById('searchForm').addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const directory = document.getElementById('directory').value;
+            const actor1 = document.getElementById('actor1').value;
+            const actor2 = document.getElementById('actor2').value;
+
+            try {
+                const response = await fetch(`${API_URL}/?directory=${directory}&name1=${encodeURIComponent(actor1)}&name2=${encodeURIComponent(actor2)}`);
+                const data = await response.json();
+
+                const resultsDiv = document.getElementById('results');
+                resultsDiv.innerHTML = '';
+
+                if (data.message) {
+                    resultsDiv.innerHTML = `<p>${data.message}</p>`;
+                } else {
+                    resultsDiv.innerHTML = `<h2>${data.degrees}</h2>`;
+                    data.layers.forEach(layer => {
+                        const layerDiv = document.createElement('div');
+                        layerDiv.className = 'result-item';
+                        layerDiv.textContent = layer;
+                        resultsDiv.appendChild(layerDiv);
+                    });
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('results').innerHTML = '<p>An error occurred while searching. Please try again.</p>';
+            }
+        });
+    </script>
+</body>
+</html>
