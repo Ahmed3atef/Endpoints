@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Performance Predictor</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        form {
+            display: grid;
+            gap: 10px;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        input, select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            grid-column: 1 / -1;
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        #result {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #e9f7ef;
+            border-radius: 4px;
+            text-align: center;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Student Performance Predictor</h1>
+        
+        <form id="predictionForm">
+            <div>
+                <label for="Age">Age:</label>
+                <input type="number" id="Age" name="Age" min="15" max="18" required>
+            </div>
+            <div>
+                <label for="Gender">Gender:</label>
+                <select id="Gender" name="Gender" required>
+                    <option value="0">Male</option>
+                    <option value="1">Female</option>
+                </select>
+            </div>
+            <div>
+                <label for="Ethnicity">Ethnicity:</label>
+                <select id="Ethnicity" name="Ethnicity" required>
+                    <option value="0">Caucasian</option>
+                    <option value="1">African American</option>
+                    <option value="2">Asian</option>
+                    <option value="3">Other</option>
+                </select>
+            </div>
+            <div>
+                <label for="ParentalEducation">Parental Education:</label>
+                <select id="ParentalEducation" name="ParentalEducation" required>
+                    <option value="0">None</option>
+                    <option value="1">High School</option>
+                    <option value="2">Some College</option>
+                    <option value="3">Bachelor's Degree</option>
+                    <option value="4">Higher</option>
+                </select>
+            </div>
+            <div>
+                <label for="StudyTimeWeekly">Weekly Study Time (hours):</label>
+                <input type="number" id="StudyTimeWeekly" name="StudyTimeWeekly" min="0" max="20" step="0.5" required>
+            </div>
+            <div>
+                <label for="Absences">Absences:</label>
+                <input type="number" id="Absences" name="Absences" min="0" max="30" required>
+            </div>
+            <div>
+                <label for="Tutoring">Tutoring:</label>
+                <select id="Tutoring" name="Tutoring" required>
+                    <option value="0">No</option>
+                    <option value="1">Yes</option>
+                </select>
+            </div>
+            <div>
+                <label for="ParentalSupport">Parental Support:</label>
+                <select id="ParentalSupport" name="ParentalSupport" required>
+                    <option value="0">None</option>
+                    <option value="1">Low</option>
+                    <option value="2">Medium</option>
+                    <option value="3">High</option>
+                    <option value="4">Very High</option>
+                </select>
+            </div>
+            <div>
+                <label for="Extracurricular">Extracurricular Activities:</label>
+                <select id="Extracurricular" name="Extracurricular" required>
+                    <option value="0">No</option>
+                    <option value="1">Yes</option>
+                </select>
+            </div>
+            <div>
+                <label for="Sports">Sports Activities:</label>
+                <select id="Sports" name="Sports" required>
+                    <option value="0">No</option>
+                    <option value="1">Yes</option>
+                </select>
+            </div>
+            <div>
+                <label for="Music">Music Activities:</label>
+                <select id="Music" name="Music" required>
+                    <option value="0">No</option>
+                    <option value="1">Yes</option>
+                </select>
+            </div>
+            <div>
+                <label for="Volunteering">Volunteering:</label>
+                <select id="Volunteering" name="Volunteering" required>
+                    <option value="0">No</option>
+                    <option value="1">Yes</option>
+                </select>
+            </div>
+            <button type="submit">Predict Performance</button>
+        </form>
+
+        <div id="result"></div>
+    </div>
+
+    <script>
+        const API_URL = 'http://127.0.0.1:8000/predict';
+
+        document.getElementById('predictionForm').addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const formData = new FormData(event.target);
+            const searchParams = new URLSearchParams();
+
+            for (const [key, value] of formData.entries()) {
+                searchParams.append(key, value);
+            }
+
+            try {
+                const response = await fetch(`${API_URL}?${searchParams.toString()}`);
+                const data = await response.json();
+
+                document.getElementById('result').innerHTML = `
+                    <h2>Predicted Grade:</h2>
+                    <p>${data['الدرجة المتوقعة']}</p>
+                `;
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('result').innerHTML = '<p>An error occurred while predicting. Please try again.</p>';
+            }
+        });
+    </script>
+</body>
+</html>
