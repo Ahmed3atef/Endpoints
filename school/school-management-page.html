@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إدارة المدرسة</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        th, td {
+            padding: 10px;
+            border: 1px solid #ddd;
+            text-align: right;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        input, button {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .actions {
+            display: flex;
+            gap: 5px;
+        }
+        .edit-btn {
+            background-color: #2196F3;
+        }
+        .delete-btn {
+            background-color: #f44336;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>إدارة المدرسة</h1>
+        
+        <form id="addStudentForm">
+            <input type="number" id="studentId" placeholder="رقم الطالب" required>
+            <input type="text" id="studentName" placeholder="اسم الطالب" required>
+            <input type="number" id="studentGrade" placeholder="الصف" required>
+            <button type="submit">إضافة طالب</button>
+        </form>
+
+        <table id="studentsTable">
+            <thead>
+                <tr>
+                    <th>الرقم</th>
+                    <th>الاسم</th>
+                    <th>الصف</th>
+                    <th>الإجراءات</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <script>
+        const API_URL = 'http://127.0.0.1:8000';
+
+        // دالة لجلب جميع الطلاب
+        async function fetchStudents() {
+            const response = await fetch(`${API_URL}/students/`);
+            const students = await response.json();
+            displayStudents(students);
+        }
+
+        // دالة لعرض الطلاب في الجدول
+        function displayStudents(students) {
+            const tableBody = document.querySelector('#studentsTable tbody');
+            tableBody.innerHTML = '';
+            students.forEach(student => {
+                const row = `
+                    <tr>
+                        <td>${student.id}</td>
+                        <td>${student.name}</td>
+                        <td>${student.grade}</td>
+                        <td class="actions">
+                            <button class="edit-btn" onclick="editStudent(${student.id})">تعديل</button>
+                            <button class="delete-btn" onclick="deleteStudent(${student.id})">حذف</button>
+                        </td>
+                    </tr>
+                `;
+                tableBody.insertAdjacentHTML('beforeend', row);
+            });
+        }
+
+        // دالة لإضافة طالب جديد
+        async function addStudent(event) {
+            event.preventDefault();
+            const id = document.getElementById('studentId').value;
+            const name = document.getElementById('studentName').value;
+            const grade = document.getElementById('studentGrade').value;
+            
+            const response = await fetch(`${API_URL}/students/`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: parseInt(id), name, grade: parseInt(grade) })
+            });
+
+            if (response.ok) {
+                fetchStudents();
+                event.target.reset();
+            } else {
+                alert('حدث خطأ أثناء إضافة الطالب');
+            }
+        }
+
+        // دالة لتعديل بيانات الطالب
+        async function editStudent(id) {
+            const name = prompt('أدخل الاسم الجديد:');
+            const grade = prompt('أدخل الصف الجديد:');
+            
+            if (name && grade) {
+                const response = await fetch(`${API_URL}/students/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id, name, grade: parseInt(grade) })
+                });
+
+                if (response.ok) {
+                    fetchStudents();
+                } else {
+                    alert('حدث خطأ أثناء تحديث بيانات الطالب');
+                }
+            }
+        }
+
+        // دالة لحذف الطالب
+        async function deleteStudent(id) {
+            if (confirm('هل أنت متأكد من حذف هذا الطالب؟')) {
+                const response = await fetch(`${API_URL}/students/${id}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    fetchStudents();
+                } else {
+                    alert('حدث خطأ أثناء حذف الطالب');
+                }
+            }
+        }
+
+        // إضافة مستمع الحدث لنموذج إضافة الطالب
+        document.getElementById('addStudentForm').addEventListener('submit', addStudent);
+
+        // جلب الطلاب عند تحميل الصفحة
+        fetchStudents();
+    </script>
+</body>
+</html>
