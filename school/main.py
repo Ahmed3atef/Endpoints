@@ -1,8 +1,10 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
+import sqlite3
 
 app = FastAPI()
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -12,37 +14,81 @@ app.add_middleware(
 )
 
 class Student(BaseModel):
-    id: int
     name: str
     grade: int
-    
 
-students = [
-    Student(id=1, name="Ahmed Atef", grade=5),
-    Student(id=2, name="Donia Esam", grade=6),
-]
+def setup_database():
+    try:
+        conn = sqlite3.connect('students.db')
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS students(
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                grade INTEGER
+            )
+            """
+        )
+        conn.commit()
+        conn.close()
+    except sqlite3.Error as e:
+        print(f"Database setup error: {e}")
+
+setup_database()
 
 @app.get('/students/')
 def read_students():
-    return students
+    try:
+        conn = sqlite3.connect('students.db')
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM students;")
+        rows = cursor.fetchall()
+        conn.close()
+        students = [{"id": row[0], "name": row[1], "grade": row[2]} for row in rows]
+        return {"students": students}
+    except sqlite3.Error as e:
+        raise HTTPException(status_code=500, detail="Failed to fetch students.")
 
 @app.post('/students/')
-def create_students(New_students: Student):
-    students.append(New_students)
-    return New_students
+async def create_students(student: Student):
+    try:
+        conn = sqlite3.connect('students.db')
+        cursor = conn.cursor()
+        cursor.execute(
+            "INSERT INTO students(name, grade) VALUES (?, ?);",
+            (student.name, student.grade)
+        )
+        student_id = cursor.lastrowid
+        conn.commit()
+        conn.close()
+        return {"message": "Student added successfully", "id": student_id}
+    except sqlite3.Error as e:
+        raise HTTPException(status_code=500, detail="Failed to create student.")
 
 @app.put('/students/{st_id}')
-def update_students(st_id:int, updated_student:Student):
-    for index , student in enumerate(students):
-        if student.id == st_id:
-            students[index] = updated_student
-            return updated_student
-    return {'error': 'Student not found!'}
+async def update_students(st_id: int, student: Student):
+    try:
+        conn = sqlite3.connect('students.db')
+        cursor = conn.cursor()
+        cursor.execute(
+            "UPDATE students SET name = ?, grade = ? WHERE id = ?;",
+            (student.name, student.grade, st_id)
+        )
+        conn.commit()
+        conn.close()
+        return {"message": "Student updated successfully", "id": st_id}
+    except sqlite3.Error as e:
+        raise HTTPException(status_code=500, detail="Failed to update student.")
 
 @app.delete('/students/{st_id}')
-def delete_students(st_id:int):
-    for index, student in enumerate(students):
-        if student.id == st_id:
-            del students[index]
-            return {"message":"Student deleted"}
-    return {'error': "student not found!"}
+async def delete_students(st_id: int):
+    try:
+        conn = sqlite3.connect('students.db')
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM students WHERE id = ?;", (st_id,))
+        conn.commit()
+        conn.close()
+        return {"message": "Student deleted successfully"}
+    except sqlite3.Error as e:
+        raise HTTPException(status_code=500, detail="Failed to delete student.")
